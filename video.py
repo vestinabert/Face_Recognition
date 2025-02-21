@@ -27,3 +27,14 @@ if not reference_encodings:
 # Initialize Mediapipe face detection
 mp_face_detection = mp.solutions.face_detection
 face_detector = mp_face_detection.FaceDetection(min_detection_confidence=0.6)
+
+
+# Open video file
+VIDEO_PATH = "input_video.mp4"
+OUTPUT_PATH = "output_video.mp4"
+PROCESS_EVERY_N_FRAMES = 35  # Process every N frames
+
+cap = cv2.VideoCapture(VIDEO_PATH)
+frame_width, frame_height = int(cap.get(3)), int(cap.get(4))
+fps = int(cap.get(cv2.CAP_PROP_FPS))
+total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))

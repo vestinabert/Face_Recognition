@@ -20,4 +20,10 @@ def load_reference_faces():
     return reference_encodings
 
 reference_encodings = load_reference_faces()
-print(reference_encodings)
+
+if not reference_encodings:
+    raise ValueError("No reference faces were encoded! Check image paths.")
+
+# Initialize Mediapipe face detection
+mp_face_detection = mp.solutions.face_detection
+face_detector = mp_face_detection.FaceDetection(min_detection_confidence=0.6)

@@ -3,4 +3,7 @@
 *.png
 *.jpeg
 *.mp4
+uploads/
+processed/
 __pycache__/
+

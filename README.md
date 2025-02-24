@@ -46,6 +46,13 @@ curl -X POST http://127.0.0.1:5000/process-image \
 ```
 This command sends an input image and a reference image to the API. The system will detect faces, compare them with the reference image, blur non-matching faces, and return the processed image as `processed_image.jpg`. Ensure that the server is running before executing this command.
 
+### Example Reference and Processed Input Images
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/ec4446ad-f007-4376-9cee-4c3563303cc1" alt="Reference Image" width="45%"/>
+  <img src="https://github.com/user-attachments/assets/5176468f-a834-4966-8cbc-98caa95db5dc" alt="Input Image" width="45%"/>
+</p>
+
 ---
 
 # Part 2: Video Processing API
@@ -80,6 +87,14 @@ curl -X POST http://127.0.0.1:5000/process_video \
      --output processed_video.mp4
 ```
 This will send reference images and a video file to the server, which will process the video and return the labeled version as `processed_video.mp4`. Ensure that the server is running before executing this command.
+
+### Example References and Processed Video
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/a3c816e4-cf91-4eba-a630-a7f9f9b4f650" alt="Reference Image" width="30%"/>
+  <img src="https://github.com/user-attachments/assets/b61c6010-839a-40c6-a8f7-9ad7aa326690" alt="Reference Image" width="30%"/>
+  <img src="https://github.com/user-attachments/assets/0edbb62c-a2f5-4c87-afda-c128c9934ec5" alt="Video Output" width="80%"/>
+</p>
 
 
 ---

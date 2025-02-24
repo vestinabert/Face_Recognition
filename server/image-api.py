@@ -3,29 +3,27 @@ from flask_cors import CORS
 import cv2
 import numpy as np
 import os
+import io
 from retinaface import RetinaFace
 from deepface import DeepFace
 
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = "uploads"
-PROCESSED_FOLDER = "processed"
+UPLOAD_FOLDER = "server/uploads"
+OUTPUT_FOLDER = "server/processed"
 
-# Ensure folders exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(PROCESSED_FOLDER, exist_ok=True)
-
-REFERENCE_IMAGE_PATH = os.path.join(UPLOAD_FOLDER, "reference.jpg")  # Reference face
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 
-# Function to detect faces
-def detect_faces(image_path):
-    return RetinaFace.detect_faces(image_path)
+def detect_faces(image):
+    """Detect faces in an image using RetinaFace."""
+    return RetinaFace.detect_faces(image)
 
 
-# Function to identify faces
 def identify_faces(input_image, detected_faces, reference_image):
+    """Compare detected faces against the reference image."""
     matching_faces = {}
     non_matching_faces = {}
 
@@ -33,24 +31,28 @@ def identify_faces(input_image, detected_faces, reference_image):
         x1, y1, x2, y2 = face_data["facial_area"]
         face_crop = input_image[y1:y2, x1:x2]
 
-        result = DeepFace.verify(
-            reference_image,
-            face_crop,
-            model_name="ArcFace",
-            detector_backend="retinaface",
-            enforce_detection=False,
-        )
+        try:
+            result = DeepFace.verify(
+                reference_image,
+                face_crop,
+                model_name="ArcFace",
+                detector_backend="retinaface",
+                enforce_detection=False,
+            )
 
-        if result["verified"]:
-            matching_faces[face_id] = face_data
-        else:
+            if result["verified"]:
+                matching_faces[face_id] = face_data
+            else:
+                non_matching_faces[face_id] = face_data
+        except Exception as e:
+            print(f"Error comparing face {face_id}: {e}")
             non_matching_faces[face_id] = face_data
 
     return matching_faces, non_matching_faces
 
 
-# Function to blur non-matching faces
 def blur_faces(image, faces_to_blur):
+    """Blur all non-matching faces in the image."""
     for face_id, face_data in faces_to_blur.items():
         x1, y1, x2, y2 = face_data["facial_area"]
         face_roi = image[y1:y2, x1:x2]
@@ -59,29 +61,42 @@ def blur_faces(image, faces_to_blur):
     return image
 
 
-# API endpoint to process images
 @app.route("/process-image", methods=["POST"])
 def process_image():
-    if "file" not in request.files:
-        return jsonify({"error": "No file provided"}), 400
+    """Process an input image against a reference image and save output in server/output/."""
+    if "input" not in request.files or "reference" not in request.files:
+        return jsonify({"error": "Both input and reference images are required"}), 400
 
-    file = request.files["file"]
-    filename = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(filename)
+    reference_file = request.files["reference"]
+    reference_path = os.path.join(UPLOAD_FOLDER, "reference.jpg")
+    reference_file.save(reference_path)
+    reference_image = cv2.imread(reference_path)
 
-    input_image = cv2.imread(filename)
+    input_file = request.files["input"]
+    input_path = os.path.join(UPLOAD_FOLDER, "input.jpg")
+    input_file.save(input_path)
+    input_image = cv2.imread(input_path)
 
-    detected_faces = detect_faces(filename)
+    if reference_image is None or input_image is None:
+        return jsonify({"error": "Invalid image format"}), 400
+
+    detected_faces = detect_faces(input_path)
+
     if not detected_faces:
         return jsonify({"error": "No faces detected"}), 400
 
     matching_faces, non_matching_faces = identify_faces(
-        input_image, detected_faces, REFERENCE_IMAGE_PATH
+        input_image, detected_faces, reference_image
     )
     processed_image = blur_faces(input_image, non_matching_faces)
 
-    output_path = os.path.join(PROCESSED_FOLDER, "output.jpg")
-    cv2.imwrite(output_path, processed_image)
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+    output_path = os.path.join(OUTPUT_FOLDER, "output.jpg")
+    success = cv2.imwrite(output_path, processed_image)
+
+    if not success:
+        return jsonify({"error": "Failed to save processed image"}), 500
 
     return send_file(output_path, mimetype="image/jpeg")
 

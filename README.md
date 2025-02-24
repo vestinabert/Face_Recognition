@@ -15,8 +15,6 @@ This project provides a face recognition system that consists of three major com
 - **OpenCV** – For image and video processing.
 - **MediaPipe** – Used for additional face detection in video processing.
 - **Gradio** – For deploying the API on Hugging Face.
-- **Ngrok** – For exposing the Flask API publicly for development/testing.
-
 ---
 
 # Part 1: Image Processing API
@@ -26,7 +24,7 @@ This project provides a face recognition system that consists of three major com
 - Blurs all non-matching faces.
 
 ## Implementation
-The API detects faces using RetinaFace, identifies them using DeepFace's ArcFace model, and blurs all non-matching faces using OpenCV. It receives an image as input, processes it, and returns the modified image with non-matching faces blurred.
+The API detects faces using RetinaFace, identifies them using DeepFace's ArcFace model, and blurs all non-matching faces using OpenCV. It receives an input image along with a reference image, processes it, and returns the modified image with non-matching faces blurred.
 
 ### Running the API
 #### Install Dependencies
@@ -37,13 +35,16 @@ pip install flask flask-cors opencv-python numpy retinaface deepface
 ```bash
 python server/image-api.py
 ```
-The API will start on `http://127.0.0.1:5000`. To process an image, send a POST request to `/process-image` with an image file.
+The API will start on `http://127.0.0.1:5000`. To process an image, send a POST request to `/process-image` with both an input image and a reference image.
 
 #### cURL Command to Test
 ```bash
 curl -X POST http://127.0.0.1:5000/process-image \
-     -F "file=@path/to/your/image.jpg"
+     -F "input=@path/to/your/input.jpg" \
+     -F "reference=@path/to/your/reference.jpg" \
+     --output processed_image.jpg
 ```
+This command sends an input image and a reference image to the API. The system will detect faces, compare them with the reference image, blur non-matching faces, and return the processed image as `processed_image.jpg`. Ensure that the server is running before executing this command.
 
 ---
 
